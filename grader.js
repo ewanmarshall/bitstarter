@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 /*
 Automatically grade files for the presence of specified HTML tags/attributes.
 Uses commander.js and cheerio. Teaches command line application development
@@ -7,27 +6,26 @@ and basic DOM parsing.
 
 References:
 
- + cheerio
-   - https://github.com/MatthewMueller/cheerio
-   - http://encosia.com/cheerio-faster-windows-friendly-alternative-jsdom/
-   - http://maxogden.com/scraping-with-node.html
++ cheerio
+- https://github.com/MatthewMueller/cheerio
+- http://encosia.com/cheerio-faster-windows-friendly-alternative-jsdom/
+- http://maxogden.com/scraping-with-node.html
 
- + commander.js
-   - https://github.com/visionmedia/commander.js
-   - http://tjholowaychuk.com/post/9103188408/commander-js-nodejs-command-line-interfaces-made-easy
++ commander.js
+- https://github.com/visionmedia/commander.js
+- http://tjholowaychuk.com/post/9103188408/commander-js-nodejs-command-line-interfaces-made-easy
 
- + JSON
-   - http://en.wikipedia.org/wiki/JSON
-   - https://developer.mozilla.org/en-US/docs/JSON
-   - https://developer.mozilla.org/en-US/docs/JSON#JSON_in_Firefox_2
++ JSON
+- http://en.wikipedia.org/wiki/JSON
+- https://developer.mozilla.org/en-US/docs/JSON
+- https://developer.mozilla.org/en-US/docs/JSON#JSON_in_Firefox_2
 */
 
-var rest = require('restler');
 var util = require('util');
+var rest = require('restler');
 var fs = require('fs');
 var program = require('commander');
 var cheerio = require('cheerio');
-var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
 
 var assertFileExists = function(infile) {
@@ -52,16 +50,12 @@ function validUrl(url){
   return url.match(/^(ht|f)tps?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/);
 }
 
-var cheerioHtmlFile = function(htmlfile) {
-    return cheerio.load(fs.readFileSync(htmlfile));
-};
-
 var loadChecks = function(checksfile) {
     return JSON.parse(fs.readFileSync(checksfile));
 };
 
-var checkHtmlFile = function(htmlfile, checksfile) {
-    $ = cheerioHtmlFile(htmlfile);
+var checkHtml = function(html, checksfile) {
+    $ = cheerio.load(html);
     var checks = loadChecks(checksfile).sort();
     var out = {};
     for(var ii in checks) {
@@ -76,7 +70,6 @@ var clone = function(fn) {
     // http://stackoverflow.com/a/6772648
     return fn.bind({});
 };
-
 
 var processUrl = function(checksfile) {
   return function(result, response) {
@@ -103,7 +96,7 @@ if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to html file', clone(assertFileExists))
-        .option('-u, --url <url>', 'Url for html file', clone(assertValidUrl))
+        .option('-u, --url <url>', 'Url for html on server', clone(assertUrlExists))
         .parse(process.argv);
     if(program.file) {
       html = fs.readFileSync(program.file);
