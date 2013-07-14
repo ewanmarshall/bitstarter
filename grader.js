@@ -37,6 +37,19 @@ var assertFileExists = function(infile) {
     return instr;
 };
 
+var assertUrlExists = function(inUrl) {
+  var url = inUrl.toString();
+  if(!validUrl(url)) {
+    console.error('Error: Invalid url');
+    process.exit(1);
+  }
+  return url;
+};
+
+function validUrl(url){
+  return url.match(/^(ht|f)tps?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/);
+}
+
 var cheerioHtmlFile = function(htmlfile) {
     return cheerio.load(fs.readFileSync(htmlfile));
 };
@@ -62,14 +75,41 @@ var clone = function(fn) {
     return fn.bind({});
 };
 
+
+var processUrl = function(checksfile) {
+  return function(result, response) {
+    if (result instanceof Error) {
+      console.error('Error: ' + util.format(response.message));
+      process.exit(1);
+    } else {
+      if(response.statusCode == 200) {
+        displayHtmlChecks(result, checksfile);
+      } else {
+        console.log('Error: ' + response.statusCode);
+      }
+    }
+  };
+};
+
+var displayHtmlChecks = function(html, checksfile) {
+  var checkJson = checkHtml(html, checksfile);
+  var outJson = JSON.stringify(checkJson, null, 4);
+  console.log(outJson);
+};
+
 if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-        .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-f, --file <html_file>', 'Path to html file', clone(assertFileExists))
+        .option('-u, --url <url>', 'Url for html file', clone(assertValidUrl))
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+    if(program.file) {
+      html = fs.readFileSync(program.file);
+      displayHtmlChecks(html, program.checks);
+    }
+    if(program.url) {
+      rest.get(program.url).on('complete', processUrl(program.checks));
+    }
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
