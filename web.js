@@ -4,6 +4,8 @@ var htmlfile = "index.html";
 
 var app = express.createServer(express.logger());
 
+app.use(express.static(__dirname + '/public'));
+
 app.get('/', function(request, response) {
 	var dataRead = fs.readFileSync(htmlfile);
 	var buff = new Buffer(dataRead);
